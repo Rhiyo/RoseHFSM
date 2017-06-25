@@ -9,10 +9,13 @@ namespace RoseHFSM {
     {
         public string hfsmName = "New HFSM";
 
+        [SerializeField]
         private List<State> states = new List<State>();
         public List<State> States{
                get { return states; }
         }
+
+        [SerializeField]
         private List<Transition> transitions = new List<Transition>();
         public List<Transition> Transitions
         {
@@ -29,13 +32,8 @@ namespace RoseHFSM {
         private State currentState;
 
         // Use this for initialization
-        void Start()
+        void OnEnable()
         {
-            if (startState == null)
-            {
-                Debug.LogError("No starting state.");
-                return;
-            }
             currentState = startState;
         }
 

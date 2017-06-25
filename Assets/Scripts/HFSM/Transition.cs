@@ -14,8 +14,12 @@ namespace RoseHFSM
         }
 
         [SerializeField]
-        private Condition[] conditions;
-
+        private List<Condition> conditions = new List<Condition>();
+        public List<Condition> Conditions
+        {
+            get { return conditions; }
+            set { conditions = value; }
+        }
         // Use this for initialization
         void Start()
         {

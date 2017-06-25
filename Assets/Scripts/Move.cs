@@ -4,16 +4,35 @@ using UnityEngine;
 
 namespace RoseHFSM
 {
-    public class Move : MonoBehaviour {
+    public class Move : State {
 
+        [SerializeField]
+        private Transform movingObject;
+
+        [SerializeField]
+        private Transform target;
+
+        [SerializeField]
+        private float speed = 2;
         
         void Start() {
 
         }
 
-        public void MoveTowards(Transform goal)
+        protected override void RunState()
         {
-            transform.position = Vector3.MoveTowards(transform.position, goal.position, Time.deltaTime * 2);
+            if (movingObject == null)
+            {
+                Debug.LogError("No object set.");
+                return;
+            }
+            if (target == null)
+            {
+                Debug.LogError("No target set.");
+                return;
+            }
+
+            movingObject.position = Vector3.MoveTowards(movingObject.transform.position, target.position, Time.deltaTime * speed);
         }
     }
 }

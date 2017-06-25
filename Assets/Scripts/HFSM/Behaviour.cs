@@ -5,7 +5,8 @@ namespace RoseHFSM
 {
     public class Behaviour : MonoBehaviour
     {
-
+        [HideInInspector]
+        [SerializeField]
         private HFSM topHFSM;
         public HFSM TopHFSM
         {

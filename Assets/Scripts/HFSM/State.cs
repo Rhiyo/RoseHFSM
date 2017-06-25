@@ -35,7 +35,7 @@ namespace RoseHFSM
 
         public State Execute()
         {
-            if(transitions != null)
+            if (transitions != null && transitions.Count != 0)
                 foreach (Transition t in transitions)
                 {
                     State toState = t.CheckConditions();
@@ -44,7 +44,6 @@ namespace RoseHFSM
                         return toState;
                     }
                 }
-
             RunState();
 
             return this;

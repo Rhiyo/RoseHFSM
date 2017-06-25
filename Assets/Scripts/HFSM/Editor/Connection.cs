@@ -7,7 +7,7 @@ namespace RoseHFSM {
     /// <summary>
     /// Transition between two nodes.
     /// </summary>
-    public struct Connection {
+    public class Connection {
         public Node toNode;
         public Node fromNode;
         public Transition transition;

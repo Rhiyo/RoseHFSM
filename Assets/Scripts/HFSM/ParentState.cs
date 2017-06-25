@@ -8,8 +8,8 @@ namespace RoseHFSM
     /// </summary>
     public class ParentState : State
     {
+        [SerializeField]
         private HFSM stateHFSM;
-
         public HFSM StateHFSM
         {
             get { return stateHFSM;  }

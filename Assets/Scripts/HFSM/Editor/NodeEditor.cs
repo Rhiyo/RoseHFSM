@@ -23,6 +23,8 @@ namespace RoseHFSM
         private HFSM currentHFSM;
         private int selectedTab = 0;
         private Node selectedNode;
+        private Connection selectedConnection;
+        private Condition selectedCondition;
 
         private float inspectHeight = 200;
         private Vector2 inspectScroll = Vector2.zero;
@@ -109,10 +111,11 @@ namespace RoseHFSM
             if (chosenTab != selectedTab)
             {
                 selectedTab = chosenTab;
-                selectedNode = null;
+                ClearNodeSelection();
                 FillFromHFSM(hfsms[selectedTab]);
             }
 
+            //Draw connections
             foreach(Connection c in connections)
             {
                 //Find start position
@@ -128,8 +131,12 @@ namespace RoseHFSM
                     c.toNode.NodeRect.height / c.toNode.FromConnections.Count / 2);
 
                 DrawCurve(startPos, endPos);
-
-                DrawDirectionMarker(endPos);
+                if(c == selectedConnection)
+                    DrawDirectionMarker(endPos, Color.red);
+                else
+                {
+                    DrawDirectionMarker(endPos, Color.black);
+                }
             }
       
             Event e = Event.current;
@@ -156,10 +163,10 @@ namespace RoseHFSM
 
                         DragAndDrop.AcceptDrag();
                             e.Use();
-                        }
-
                     }
+
                 }
+            }
 
 
 
@@ -193,53 +200,132 @@ namespace RoseHFSM
 
             
             BeginWindows();
-            //GUILayout.BeginArea(new Rect(0, position.height, position.width, position.height - 200));
+
             for (int i = 0; i < nodes.Count; i++)
             {
                 if (e.type == EventType.MouseUp && e.button == 0 && !nodes[i].NodeRect.Contains(e.mousePosition) &&
                     !inspect.Contains(e.mousePosition))
-                    selectedNode = null;
+                    ClearNodeSelection();
 
                 nodes[i].NodeRect = GUI.Window(i, nodes[i].NodeRect, DrawNodeWindow, nodes[i].NodeState.StateName);
-                /*
-                SerializedObject nodeSerial = new SerializedObject(nodes[i].NodeState);
-                SerializedProperty eventProperty = nodeSerial.FindProperty("task");
-                EditorGUILayout.PropertyField(eventProperty);
-                nodeSerial.ApplyModifiedProperties();
-                */
+
             }
-            //GUILayout.EndArea();
+
+
 
             if (selectedNode != null)
             {
-                // create a style based on the default label style
-                GUIStyle inspectStyle = new GUIStyle(GUI.skin.label);
-                // do whatever you want with this style, e.g.:
-                inspectStyle.margin = new RectOffset(20, 20, 20, 20);
-                GUILayout.BeginArea(inspect);
-                inspectScroll = GUILayout.BeginScrollView(inspectScroll, inspectStyle);
+                GUI.Box(inspect, selectedNode.NodeState.StateName);
 
-                SerializedObject serializedObject = new SerializedObject(selectedNode.NodeState);
+                Rect inspectContent = new Rect(inspect);
+                inspectContent.y += 20;
+                inspectContent.height -= 20;
+                GUILayout.BeginArea(inspectContent);
+                inspectScroll = GUILayout.BeginScrollView(inspectScroll);
 
-                SerializedProperty property = serializedObject.GetIterator();
-                property.Next(true);
-                bool children = false;
 
-                
-                while (property.NextVisible(children))
+                if (selectedConnection == null) {
+                    SerializedObject serializedObject = new SerializedObject(selectedNode.NodeState);
+
+                    SerializedProperty property = serializedObject.GetIterator();
+                    property.Next(true);
+                    bool children = false;
+
+
+                    while (property.NextVisible(children))
+                    {
+                        //serializedObject.Update();
+                        if (property.name == "nodeEditorLoc" ||
+                            property.name == "transitions")
+                            continue;
+
+                        EditorGUILayout.PropertyField(property);
+
+                    }
+
+                    serializedObject.ApplyModifiedProperties();
+
+                    EditorGUILayout.LabelField("Transitions");
+                    foreach (Connection t in selectedNode.FromConnections)
+                        if(GUILayout.Button(t.fromNode.NodeState.StateName + " > " + t.toNode.NodeState.StateName))
+                        {
+                            selectedConnection = t;
+                        }
+                    foreach (Connection t in selectedNode.ToConnections)
+                        if(GUILayout.Button(t.fromNode.NodeState.StateName + " > " + t.toNode.NodeState.StateName))
+                        {
+                            selectedConnection = t;
+                        }
+                }
+                else if (selectedCondition == null) {
+                    if (GUILayout.Button("Back"))
+                    {
+                        selectedConnection = null;
+                    }
+                    else
+                    {
+
+                        foreach (Condition c in selectedConnection.transition.Conditions)
+                        {
+                            if (GUILayout.Button(c.GetType().Name))
+                            {
+                                selectedCondition = c;
+                            }
+                        }
+
+                        //Accept adding new condition
+                        foreach (Object o in DragAndDrop.objectReferences)
+                        {
+                            if (o is MonoScript //&& inspect.Contains(e.mousePosition) 
+                                && ((MonoScript)o).GetClass().IsSubclassOf(typeof(Condition)))
+                            {
+                                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                                if (e.type == EventType.DragPerform)
+                                {
+                                    Condition condition = CreateInstance(((MonoScript)o).GetClass()) as Condition;
+                                    selectedConnection.transition.Conditions.Add(condition);
+
+                                    DragAndDrop.AcceptDrag();
+                                    e.Use();
+                                }
+
+                            }
+                        }
+                    }
+                }
+                else if(selectedCondition != null)
                 {
-                    //serializedObject.Update();
-                    if (property.name == "nodeEditorLoc" ||
-                        property.name == "transitions")
-                        continue;
+                    if (GUILayout.Button("Back"))
+                    {
+                        selectedCondition = null;
+                    }
+                    else
+                    {
+                        SerializedObject serializedObject = new SerializedObject(selectedCondition);
 
-                    EditorGUILayout.PropertyField(property);
-                    
+                        SerializedProperty property = serializedObject.GetIterator();
+                        property.Next(true);
+                        bool children = false;
+
+
+                        while (property.NextVisible(children))
+                        {
+                            //serializedObject.Update();
+                            //if (property.name == "nodeEditorLoc" ||
+                              //  property.name == "transitions")
+                                //continue;
+
+                            EditorGUILayout.PropertyField(property);
+
+                        }
+
+                        serializedObject.ApplyModifiedProperties();
+                    }
                 }
 
-                serializedObject.ApplyModifiedProperties();
-
                 GUILayout.EndScrollView();
+                
                 GUILayout.EndArea();
             }
 
@@ -441,7 +527,7 @@ namespace RoseHFSM
         void DeleteNode(Node forDeletion)
         {
             if (selectedNode == forDeletion)
-                selectedNode = null;
+                ClearNodeSelection();
 
             foreach (Connection c in forDeletion.FromConnections)
             {
@@ -468,6 +554,13 @@ namespace RoseHFSM
             currentHFSM.States.Remove(forDeletion.NodeState);
             DestroyImmediate(forDeletion.NodeState);
             nodes.Remove(forDeletion);
+        }
+
+        void ClearNodeSelection()
+        {
+            selectedNode = null;
+            selectedConnection = null;
+            selectedCondition = null;
         }
 
         #region[CallBack Methods]
@@ -569,6 +662,7 @@ namespace RoseHFSM
             
             if (e.type == EventType.mouseUp)
             {
+                ClearNodeSelection();
                 selectedNode = nodes[id];
             }
             
@@ -642,10 +736,10 @@ namespace RoseHFSM
         /// Draw marker to show direction of transitions.
         /// </summary>
         /// <param name="window">The window transitions too.</param>
-        private void DrawDirectionMarker(Vector2 pos)
+        private void DrawDirectionMarker(Vector2 pos, Color colour)
         {
             //Handles.BeginGUI();
-            Handles.color = Color.black;
+            Handles.color = colour;
             Handles.ConeCap(0, pos, Quaternion.identity, 15);
             //Handles.EndGUI();
             //Repaint();
