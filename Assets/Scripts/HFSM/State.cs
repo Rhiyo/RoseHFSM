@@ -15,7 +15,12 @@ namespace RoseHFSM
         
         [NodeField]
         [SerializeField]
-        public string stateName = "New State";
+        protected string stateName = "New State";
+        public virtual string StateName
+        {
+            get { return stateName; }
+            set { stateName = value; }
+        }
 
         [NodeField]
         [SerializeField]

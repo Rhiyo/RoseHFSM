@@ -82,9 +82,6 @@ namespace RoseHFSM
 
         void OnGUI()
         {
-
-            //DragAndDrop.objectReferences
-
             //Draw Grid
             DrawGrid(20, 0.2f, Color.white);
             DrawGrid(100, 0.4f, Color.white);
@@ -112,7 +109,7 @@ namespace RoseHFSM
             if (chosenTab != selectedTab)
             {
                 selectedTab = chosenTab;
-
+                selectedNode = null;
                 FillFromHFSM(hfsms[selectedTab]);
             }
 
@@ -136,6 +133,35 @@ namespace RoseHFSM
             }
       
             Event e = Event.current;
+
+            //Check for Drag and Drop states
+            //if (e.type == EventType.MouseUp && e.button == 0)
+            foreach (Object o in DragAndDrop.objectReferences)
+            {
+                if(o is MonoScript && (((MonoScript)o).GetClass().IsSubclassOf(typeof(State)) ||
+                    ((MonoScript)o).GetClass() == typeof(State)))
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                    if(e.type == EventType.DragPerform)
+                    {
+                        State state = CreateInstance(((MonoScript)o).GetClass()) as State;
+                        state.nodeEditorLoc.x = e.mousePosition.x;
+                        state.nodeEditorLoc.y = e.mousePosition.y;
+                        AddNode(state);
+
+                        //Hack to add HFSM
+                        if (state is ParentState)
+                            hfsms.Add(((ParentState)state).StateHFSM);
+
+                        DragAndDrop.AcceptDrag();
+                            e.Use();
+                        }
+
+                    }
+                }
+
+
 
             //Check for delete button.
             if (e.type == EventType.KeyUp && e.keyCode == KeyCode.Delete && selectedNode != null)
@@ -174,7 +200,7 @@ namespace RoseHFSM
                     !inspect.Contains(e.mousePosition))
                     selectedNode = null;
 
-                nodes[i].NodeRect = GUI.Window(i, nodes[i].NodeRect, DrawNodeWindow, nodes[i].NodeState.stateName);
+                nodes[i].NodeRect = GUI.Window(i, nodes[i].NodeRect, DrawNodeWindow, nodes[i].NodeState.StateName);
                 /*
                 SerializedObject nodeSerial = new SerializedObject(nodes[i].NodeState);
                 SerializedProperty eventProperty = nodeSerial.FindProperty("task");
@@ -387,6 +413,7 @@ namespace RoseHFSM
 
         void AddNode(State state)
         {
+            state.StateName = "New " + state.GetType().Name;
             if (nodes.Count == 0)
                 currentHFSM.StartState = state;
 
@@ -475,7 +502,7 @@ namespace RoseHFSM
             state.hideFlags = HideFlags.HideInInspector;
             state.StateHFSM = CreateInstance<HFSM>();
             state.StateHFSM.hideFlags = HideFlags.HideInInspector;
-            state.StateHFSM.hfsmName = state.stateName;
+            state.StateHFSM.hfsmName = state.StateName;
             hfsms.Add(state.StateHFSM);
             state.nodeEditorLoc = position;
 
