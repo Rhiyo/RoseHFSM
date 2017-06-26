@@ -26,6 +26,9 @@ namespace RoseHFSM
         private Connection selectedConnection;
         private Condition selectedCondition;
 
+        //Simulation Variables
+        private State runningState;
+
         private float inspectHeight = 200;
         private Vector2 inspectScroll = Vector2.zero;
 
@@ -207,6 +210,9 @@ namespace RoseHFSM
                     !inspect.Contains(e.mousePosition))
                     ClearNodeSelection();
 
+                GUI.color = Color.gray;
+                if (currentMode == NodeEditorMode.Simulation && nodes[i].NodeState == currentHFSM.CurrentState)
+                    GUI.color = Color.magenta;
                 nodes[i].NodeRect = GUI.Window(i, nodes[i].NodeRect, DrawNodeWindow, nodes[i].NodeState.StateName);
 
             }
@@ -386,12 +392,37 @@ namespace RoseHFSM
 
         void Update()
         {
+            if (Application.isPlaying)
+            {
+                if (currentMode != NodeEditorMode.Simulation)
+                    Repaint();
+                if (currentMode == NodeEditorMode.NewTransition)
+                    CancelNewTransition();
+                if (currentHFSM != null && currentHFSM.CurrentState != null)
+                    if (runningState != currentHFSM.CurrentState)
+                    {
+                        runningState = currentHFSM.CurrentState;
+                        Repaint();
+                    }
+                currentMode = NodeEditorMode.Simulation;
+
+            }
+            else if (Application.isEditor && currentMode == NodeEditorMode.Simulation)
+            {
+                currentMode = NodeEditorMode.Editing;
+                Repaint();
+            }
             if (EditorWindow.focusedWindow == this &&
                 EditorWindow.mouseOverWindow == this &&
                 currentMode == NodeEditorMode.NewTransition)
             {
                 Repaint();
             }
+        }
+
+        void CancelNewTransition()
+        {
+
         }
 
         /// <summary>

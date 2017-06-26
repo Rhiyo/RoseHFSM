@@ -30,6 +30,10 @@ namespace RoseHFSM {
             set { startState = value; }
         }
         private State currentState;
+        public State CurrentState
+        {
+            get { return currentState; }
+        }
 
         // Use this for initialization
         void OnEnable()
