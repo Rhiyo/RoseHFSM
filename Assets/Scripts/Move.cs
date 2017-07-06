@@ -19,20 +19,20 @@ namespace RoseHFSM
 
         }
 
-        protected override void RunState()
+        protected override State ContinuousAction()
         {
             if (movingObject == null)
             {
                 Debug.LogError("No object set.");
-                return;
+                return null;
             }
             if (target == null)
             {
                 Debug.LogError("No target set.");
-                return;
+                return null;
             }
-
             movingObject.position = Vector3.MoveTowards(movingObject.transform.position, target.position, Time.deltaTime * speed);
+            return this;
         }
     }
 }

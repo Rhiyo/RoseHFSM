@@ -21,10 +21,15 @@ namespace RoseHFSM
             get { return stateName; }
             set { stateName = value; }
         }
-
-        [NodeField]
+        
         [SerializeField]
-        public UnityEvent task;
+        protected UnityEvent continuousAction;
+
+        [SerializeField]
+        protected UnityEvent entryAction;
+
+        [SerializeField]
+        protected UnityEvent exitAction;
 
         [SerializeField]
         private List<Transition> transitions = new List<Transition>();
@@ -41,17 +46,40 @@ namespace RoseHFSM
                     State toState = t.CheckConditions();
                     if (toState != null)
                     {
-                        return toState;
+                        ExitAction();
+                        t.TransitionAction();
+                        EntryAction();
+                        return toState;       
                     }
                 }
-            RunState();
+
+            return ContinuousAction();
+        }
+
+        /// <summary>
+        /// Called while state is running.
+        /// </summary>
+        protected virtual State ContinuousAction()
+        {
+            continuousAction.Invoke();
 
             return this;
         }
 
-        protected virtual void RunState()
+        /// <summary>
+        /// Called on state entry.
+        /// </summary>
+        public virtual void EntryAction()
         {
-            task.Invoke();
+            entryAction.Invoke();
+        }
+
+        /// <summary>
+        /// Called on state exit.
+        /// </summary>
+        protected virtual void ExitAction()
+        {
+            exitAction.Invoke();
         }
     }
 }

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
+ /// <summary>
+ /// If transitions directly from this HFSM to another,
+ /// resets currentState to start.
+ /// </summary>
 namespace RoseHFSM {
     [System.Serializable]
     public class HFSM : ScriptableObject
@@ -21,6 +24,16 @@ namespace RoseHFSM {
         {
             get { return transitions; }
         }
+
+        /*// <summary>
+        /// Keeping track of transitionsd that come in from outside.
+        /// </summary>
+        [SerializeField]
+        private Dictionary<Transition, State> outsideTransitions = new Dictionary<Transition, State>();
+        public Dictionary<Transition, State> OutsideTransitions
+        {
+            get { return outsideTransitions; }
+        }*/
 
         [SerializeField]
         private State startState;
@@ -41,18 +54,30 @@ namespace RoseHFSM {
             currentState = startState;
         }
 
-        public void Execute()
+        public State Execute()
         {
             if (currentState == null)
-                return;
+                return null;
 
-            currentState = currentState.Execute();
+            State nextState = currentState.Execute();
+            if (states.Contains(nextState))
+                currentState = nextState;
+
+            return nextState;
         }
 
-        public void Reset()
+        /// <summary>
+        /// Clears the HFSM. Use this if there are any errors.
+        /// </summary>
+        public void Clear()
         {
             states.Clear();
             transitions.Clear();
+        }
+
+        public void ResetToStartState()
+        {
+            currentState = startState;
         }
 
     }

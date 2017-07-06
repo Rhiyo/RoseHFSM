@@ -36,10 +36,11 @@ namespace RoseHFSM
             }
         }
 
-        protected override void RunState()
+        protected override State ContinuousAction()
         {
-            base.RunState();
-            stateHFSM.Execute();
+            base.ContinuousAction();
+
+            return stateHFSM.Execute();
         }
     }
 }
