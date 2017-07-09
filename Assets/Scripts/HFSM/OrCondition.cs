@@ -11,5 +11,15 @@ namespace RoseHFSM
         public override bool Check() {
             return a.Check() || b.Check();
         }
+
+
+        void OnDestroy()
+        {
+            if (a)
+                DestroyImmediate(a);
+
+            if (b)
+                DestroyImmediate(b);
+        }
     }
 }

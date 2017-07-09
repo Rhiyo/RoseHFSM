@@ -272,10 +272,17 @@ namespace RoseHFSM
                             //fromState = currentHFSM.OutsideTransitions[t.transition];
                         if (fromState == null)
                             continue;
+                        GUILayout.BeginHorizontal();
                         if (GUILayout.Button(fromState.StateName + " > " + t.toNode.NodeState.StateName))
                         {
                             selectedConnection = t;
                         }
+                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                        {
+                            DestroyConnection(t);
+                            break;
+                        }
+                        GUILayout.EndHorizontal();
                     }
                     foreach (Connection t in selectedNode.ToConnections) {
                         State toState = t.transition.ToState;
@@ -283,10 +290,17 @@ namespace RoseHFSM
                             toState = t.transition.ToState;
                         if (toState == null)
                             continue;
+                        GUILayout.BeginHorizontal();
                         if (GUILayout.Button(t.fromNode.NodeState.StateName + " > " + toState.StateName))
                         {
                             selectedConnection = t;
                         }
+                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                        {
+                            DestroyConnection(t);
+                            break;
+                        }
+                        GUILayout.EndHorizontal();
                     }
                 }
                 //Display transition details
@@ -469,10 +483,25 @@ namespace RoseHFSM
             if (selectedCondition.Count == 0) {
                 foreach (Condition c in selectedConnection.transition.Conditions)
                 {
+                    //Error clearing
+                    if (c == null)
+                    {
+                        selectedConnection.transition.Conditions.Remove(c);
+                        break;
+                    }
+                        
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button(c.GetType().Name))
                     {
                         selectedCondition.Push(c);
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        RemoveCondition(selectedConnection.transition, c);
+                        break;
+                    }
+
+                    GUILayout.EndHorizontal();
                 }
 
                 return;
@@ -498,43 +527,88 @@ namespace RoseHFSM
             {
                 NotCondition nc = (NotCondition)con;
                 if (nc.notThis != null)
+                {
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button("NOT " + nc.notThis.GetType().Name))
                     {
                         selectedCondition.Push(nc.notThis);
                         return;
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        DestroyCondition(nc.notThis);
+                        nc.notThis = null;
+                    }
+                    GUILayout.EndHorizontal();
+                }
             }
             else if (con is AndCondition)
             {
                 AndCondition ac = (AndCondition)con;
                 if (ac.a != null)
+                {
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button("A " + ac.a.GetType().Name))
                     {
                         selectedCondition.Push(ac.a);
                         return;
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        DestroyCondition(ac.a);
+                        ac.a = null;
+                    }
+                    GUILayout.EndHorizontal();
+                }
                 if (ac.b != null)
+                {
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button("B " + ac.b.GetType().Name))
                     {
                         selectedCondition.Push(ac.b);
                         return;
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        DestroyCondition(ac.b);
+                        ac.b = null;
+                    }
+                    GUILayout.EndHorizontal();
+                }
             }
             else if (con is OrCondition)
             {
                 OrCondition oc = (OrCondition)con;
                 if (oc.a != null)
+                {
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button("A " + oc.a.GetType().Name))
                     {
                         selectedCondition.Push(oc.a);
                         return;
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        DestroyCondition(oc.a);
+                        oc.a = null;
+                    }
+                    GUILayout.EndHorizontal();
+                }
                 if (oc.b != null)
+                {
+                    GUILayout.BeginHorizontal();
                     if (GUILayout.Button("B " + oc.b.GetType().Name))
                     {
                         selectedCondition.Push(oc.b);
                         return;
                     }
+                    if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                    {
+                        DestroyCondition(oc.b);
+                        oc.b = null;
+                    }
+                    GUILayout.EndHorizontal();
+                }
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -692,9 +766,7 @@ namespace RoseHFSM
         void CancelTransitioning()
         {
             currentMode = NodeEditorMode.Editing;
-            if (outsiderNode != null &&
-               toOutside == 0)
-                outsiderNode = null;
+            UpdateOutsiderNode();
         }
 
         void AddNode(State state)
@@ -731,21 +803,14 @@ namespace RoseHFSM
             if (selectedNode == forDeletion)
                 ClearNodeSelection();
 
-            foreach (Connection c in forDeletion.FromConnections)
+            for (int i = forDeletion.FromConnections.Count - 1; i >= 0; i--)
             {
-                c.fromNode.ToConnections.Remove(c);
-                currentHFSM.Transitions.Remove(c.transition);
-                //currentHFSM.OutsideTransitions.Remove(c.transition);
-                DestroyImmediate(c.transition);
-                connections.Remove(c);
+                DestroyConnection(forDeletion.FromConnections[i]);
             }
 
-            foreach (Connection c in forDeletion.ToConnections)
-            {
-                c.toNode.FromConnections.Remove(c);
-                currentHFSM.Transitions.Remove(c.transition);
-                DestroyImmediate(c.transition);
-                connections.Remove(c);
+            for (int i = forDeletion.ToConnections.Count-1;i >= 0; i--)
+            { 
+                DestroyConnection(forDeletion.ToConnections[i]);
             }
 
             //If state is parent, delete its HFSM.
@@ -757,6 +822,14 @@ namespace RoseHFSM
             currentHFSM.States.Remove(forDeletion.NodeState);
             DestroyImmediate(forDeletion.NodeState);
             nodes.Remove(forDeletion);
+            UpdateOutsiderNode();
+        }
+
+        void UpdateOutsiderNode()
+        {
+            if (outsiderNode != null &&
+                toOutside == 0)
+                outsiderNode = null;
         }
 
         void ClearNodeSelection()
@@ -1021,6 +1094,44 @@ namespace RoseHFSM
             Handles.color = Color.white;
             Handles.EndGUI();
         }
+        #endregion
+
+        #region[Removal Methods]
+
+        private void DestroyCondition(Condition condition)
+        {
+            DestroyImmediate(condition);
+        }
+
+        private void RemoveCondition(Transition transition, Condition condition)
+        {
+            transition.Conditions.Remove(condition);
+            DestroyCondition(condition);
+        }
+
+        private void DestroyTransition(Transition transition)
+        {
+
+            foreach (Condition c in transition.Conditions)
+                DestroyCondition(c);
+
+            DestroyImmediate(transition);
+        }
+
+        private void DestroyConnection(Connection c)
+        {
+            connections.Remove(c);
+            if (outsiderNode != null)
+                if (c.toNode == outsiderNode)
+                    toOutside--;
+            currentHFSM.Transitions.Remove(c.transition);
+            c.fromNode.NodeState.Transitions.Remove(c.transition);
+            DestroyTransition(c.transition);
+            c.fromNode.ToConnections.Remove(c);
+            c.toNode.FromConnections.Remove(c);
+            UpdateOutsiderNode();
+        }
+
         #endregion
     }
 }                              

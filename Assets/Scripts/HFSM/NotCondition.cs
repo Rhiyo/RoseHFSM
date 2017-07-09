@@ -11,5 +11,11 @@ namespace RoseHFSM
         public override bool Check() {
             return !notThis;
         }
+
+        void OnDestroy()
+        {
+            if (notThis)
+                DestroyImmediate(notThis);
+        } 
     }
 }
