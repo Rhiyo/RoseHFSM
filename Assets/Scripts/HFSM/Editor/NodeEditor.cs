@@ -165,7 +165,8 @@ namespace RoseHFSM
 
                     if(e.type == EventType.DragPerform)
                     {
-                        State state = CreateInstance(((MonoScript)o).GetClass()) as State;
+                        State state = Selection.activeGameObject.AddComponent(((MonoScript)o).GetClass()) as State;
+                        state.hideFlags = HideFlags.HideInInspector;
                         state.nodeEditorLoc.x = e.mousePosition.x;
                         state.nodeEditorLoc.y = e.mousePosition.y;
                         AddNode(state);
@@ -448,7 +449,8 @@ namespace RoseHFSM
 
                     if (e.type == EventType.DragPerform)
                     {
-                        Condition condition = CreateInstance(((MonoScript)o).GetClass()) as Condition;
+                        Condition condition = Selection.activeGameObject.AddComponent(((MonoScript)o).GetClass()) as Condition;
+                        condition.hideFlags = HideFlags.HideInInspector;
                         if (selectedCondition.Count == 0)
                             selectedConnection.transition.Conditions.Add(condition);
                         else if (selectedCondition.Peek() is OrCondition)
@@ -850,7 +852,7 @@ namespace RoseHFSM
                 return;
 
             Vector2 position = (Vector2)pos;
-            State state = CreateInstance<State>();
+            State state = Selection.activeGameObject.AddComponent<State>();
             state.hideFlags = HideFlags.HideInInspector;
             state.nodeEditorLoc = position;
 
@@ -872,7 +874,7 @@ namespace RoseHFSM
                 return;
 
             Vector2 position = (Vector2)pos;
-            ParentState state = CreateInstance<ParentState>();
+            ParentState state = Selection.activeGameObject.AddComponent<ParentState>();
             state.hideFlags = HideFlags.HideInInspector;
             state.StateHFSM = CreateInstance<HFSM>();
             state.StateHFSM.hideFlags = HideFlags.HideInInspector;

@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace RoseHFSM
 {
     [System.Serializable]
-    public class State : ScriptableObject
+    public class State : MonoBehaviour
     {
 
 #if (UNITY_EDITOR)

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace RoseHFSM
 {
-    public class Condition : ScriptableObject
+    public class Condition : MonoBehaviour
     {
               
         public virtual bool Check() {
