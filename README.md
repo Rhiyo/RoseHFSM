@@ -1,5 +1,5 @@
 <h1>RoseHFSM</h1>
-This project is used for the implemention of hierarchical state-machine AI in Unity.
+This project is used for the implemention of <a href="https://en.wikipedia.org/wiki/UML_state_machine#Hierarchically_nested_states">hierarchical state-machine</a> AI in <a href="https://Unity3d.com">Unity</a>.
 
 <h2>Features:</h2>
 <ul>
