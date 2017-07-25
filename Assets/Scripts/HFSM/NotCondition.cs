@@ -9,13 +9,13 @@ namespace RoseHFSM
         [SerializeField]
         public Condition notThis;      
         public override bool Check() {
-            return !notThis;
+            return !notThis.Check();
         }
 
         void OnDestroy()
         {
             if (notThis)
-                DestroyImmediate(notThis);
+                Destroy(notThis);
         } 
     }
 }

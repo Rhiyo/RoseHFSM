@@ -13,6 +13,14 @@ namespace RoseHFSM
             get { return topHFSM; }
             set { topHFSM = value; }
         }
+
+        [SerializeField]
+        private GameObject owner;
+        public GameObject Owner
+        {
+            get { return owner; }
+            set { owner = value; }
+        }
         // Use this for initialization
         void Start()
         {

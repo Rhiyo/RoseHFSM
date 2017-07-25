@@ -7,8 +7,7 @@ using UnityEngine;
  /// resets currentState to start.
  /// </summary>
 namespace RoseHFSM {
-    [System.Serializable]
-    public class HFSM : ScriptableObject
+    public class HFSM : MonoBehaviour
     {
         public string hfsmName = "New HFSM";
 
@@ -42,22 +41,23 @@ namespace RoseHFSM {
             get { return startState; }
             set { startState = value; }
         }
+
         private State currentState;
         public State CurrentState
         {
             get { return currentState; }
         }
 
-        // Use this for initialization
-        void OnEnable()
-        {
-            currentState = startState;
-        }
-
         public State Execute()
         {
             if (currentState == null)
-                return null;
+            {
+                if (startState == null)
+                    return null;
+
+                currentState = startState;
+                currentState.EntryAction();
+            }
 
             State nextState = currentState.Execute();
             if (states.Contains(nextState))
@@ -77,7 +77,7 @@ namespace RoseHFSM {
 
         public void ResetToStartState()
         {
-            currentState = startState;
+            currentState = null;
         }
 
     }

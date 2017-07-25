@@ -89,7 +89,10 @@ namespace RoseHFSM
             currentHFSM = null;
             //currentHFSM = bc.GetHFSM();
             if (bc.TopHFSM == null)
-                bc.TopHFSM = CreateInstance<HFSM>();
+            {
+                bc.TopHFSM = Selection.activeGameObject.AddComponent<HFSM>();
+                bc.TopHFSM.hideFlags = HideFlags.HideInInspector;
+            }
             FillFromHFSM(bc.TopHFSM);
             Repaint();
         }
@@ -451,6 +454,7 @@ namespace RoseHFSM
                     {
                         Condition condition = Selection.activeGameObject.AddComponent(((MonoScript)o).GetClass()) as Condition;
                         condition.hideFlags = HideFlags.HideInInspector;
+                        condition.Owner = Selection.activeGameObject.GetComponent<Behaviour>().Owner;
                         if (selectedCondition.Count == 0)
                             selectedConnection.transition.Conditions.Add(condition);
                         else if (selectedCondition.Peek() is OrCondition)
@@ -742,7 +746,7 @@ namespace RoseHFSM
         /// <param name="toId">End of the transition.</param>
         void AddTransition(Node from, Node to)                                                                        
         {
-            Transition transition = CreateInstance<Transition>();
+            Transition transition = Selection.activeGameObject.AddComponent<Transition>();
             AddTransition(transition, from, to);
         }
 
@@ -774,6 +778,7 @@ namespace RoseHFSM
         void AddNode(State state)
         {
             state.StateName = "New " + state.GetType().Name;
+            state.Owner = Selection.activeGameObject.GetComponent<Behaviour>().Owner;
             if (nodes.Count == 0)
                 currentHFSM.StartState = state;
 
@@ -876,7 +881,7 @@ namespace RoseHFSM
             Vector2 position = (Vector2)pos;
             ParentState state = Selection.activeGameObject.AddComponent<ParentState>();
             state.hideFlags = HideFlags.HideInInspector;
-            state.StateHFSM = CreateInstance<HFSM>();
+            state.StateHFSM = Selection.activeGameObject.AddComponent<HFSM>();
             state.StateHFSM.hideFlags = HideFlags.HideInInspector;
             state.StateHFSM.hfsmName = state.StateName;
             hfsms.Add(state.StateHFSM);
@@ -906,7 +911,7 @@ namespace RoseHFSM
             if (!(to.NodeState is ParentState))
                 return;
 
-            ParentTransition transition = CreateInstance<ParentTransition>();
+            ParentTransition transition = Selection.activeGameObject.AddComponent<ParentTransition>();
             transition.EntryState = ParentTransition.ToStateType.CurrentState;
 
             AddTransition(transition, newTransitionFrom, to);
@@ -922,7 +927,7 @@ namespace RoseHFSM
             if (!(to.NodeState is ParentState))
                 return;
 
-            ParentTransition transition = CreateInstance<ParentTransition>();
+            ParentTransition transition = Selection.activeGameObject.AddComponent<ParentTransition>();
             transition.EntryState = ParentTransition.ToStateType.DefaultStartState;
 
             AddTransition(transition, newTransitionFrom, to);

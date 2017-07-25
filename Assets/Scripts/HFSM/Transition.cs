@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 namespace RoseHFSM
 {
-    public class Transition : ScriptableObject
+    public class Transition : MonoBehaviour
     {
         [SerializeField]
         protected State toState;

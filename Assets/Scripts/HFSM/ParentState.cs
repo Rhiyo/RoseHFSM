@@ -31,7 +31,7 @@ namespace RoseHFSM
         {
             if (stateHFSM == null)
             {
-                stateHFSM = CreateInstance<HFSM>();
+                stateHFSM = gameObject.AddComponent<HFSM>();
                 stateHFSM.hfsmName = stateName;
             }
         }

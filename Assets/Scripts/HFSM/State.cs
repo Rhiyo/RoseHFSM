@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 namespace RoseHFSM
 {
-    [System.Serializable]
     public class State : MonoBehaviour
     {
 
@@ -12,14 +11,19 @@ namespace RoseHFSM
         public Vector2 nodeEditorLoc;
 #endif
 
-        
-        [NodeField]
         [SerializeField]
         protected string stateName = "New State";
         public virtual string StateName
         {
             get { return stateName; }
             set { stateName = value; }
+        }
+
+        protected GameObject owner;
+        public GameObject Owner
+        {
+            get { return owner; }
+            set { owner = value; }
         }
         
         [SerializeField]
@@ -48,7 +52,7 @@ namespace RoseHFSM
                     {
                         ExitAction();
                         t.TransitionAction();
-                        EntryAction();
+                        toState.EntryAction();
                         return toState;       
                     }
                 }
