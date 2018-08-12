@@ -4,22 +4,23 @@ using UnityEngine;
 
 namespace RoseHFSM
 {
-    public class OrCondition : Condition
+    public class AndCondition : Condition
     {
         [SerializeField]
-        public Condition a, b;  
+        public Condition a, b;    
         public override bool Check() {
-            return a.Check() || b.Check();
+            return a.Check() && b.Check();
         }
 
-
+        /*
         void OnDestroy()
         {
             if (a)
                 DestroyImmediate(a);
 
             if (b)
-                DestroyImmediate(b);
+                DestroyImmediate(b);    
         }
+        */
     }
 }

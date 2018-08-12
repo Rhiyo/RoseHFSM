@@ -14,6 +14,8 @@ namespace RoseHFSM
             Editing, NewTransition, Empty, Simulation
         }
 
+        #region Properties
+
         private List<Node> nodes = new List<Node>();
         private List<HFSM> hfsms = new List<HFSM>();
         private List<Connection> connections = new List<Connection>();
@@ -48,6 +50,14 @@ namespace RoseHFSM
 
         private int toOutside;
 
+        private GUIStyle nodeStyle;
+        private GUIStyle nodeStyleSelected;
+        private GUIStyle nodeStyleSimulation;
+        private GUIStyle connectionStyle;
+        private Dictionary<string, Color> theme;
+
+        #endregion
+
         /*
         [MenuItem("Window/Node editor")]
         public static void ShowEditor()
@@ -55,6 +65,23 @@ namespace RoseHFSM
             NodeEditor editor = EditorWindow.GetWindow<NodeEditor>();
         }
         */
+
+        private void OnEnable()
+        {
+            nodeStyle = new GUIStyle();
+            nodeStyle.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Default.png") as Texture2D;
+            nodeStyle.border = new RectOffset(2, 2, 24, 2);
+            nodeStyle.alignment = TextAnchor.UpperCenter;
+            nodeStyle.padding.top = 4;
+
+            nodeStyleSelected = new GUIStyle();
+            nodeStyleSelected.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Selected.png") as Texture2D;
+            nodeStyleSelected.border = new RectOffset(2, 2, 24, 2);
+            nodeStyleSelected.alignment = TextAnchor.UpperCenter;
+            nodeStyle.padding.top = 4;
+
+            connectionStyle = new GUIStyle();
+        }
 
         void OnSelectionChange()
         {
@@ -74,7 +101,7 @@ namespace RoseHFSM
             }
 
             Behaviour bc = Selection.activeTransform.gameObject.GetComponent<Behaviour>();
-            
+
             //Stop if no active transform or behaviour on active object.
             if (bc == null)
             {
@@ -108,31 +135,8 @@ namespace RoseHFSM
                 Selection.activeGameObject.GetComponent<Behaviour>() == null)
                 return;
 
-            //Setup Inspect rect
-            Rect inspect = new Rect(0, position.height - inspectHeight, position.width, inspectHeight);
-
-            //Draw HFSM selector
-            string[] hfsmTabs = new string[hfsms.Count];
-            for (int i = 0; i < hfsms.Count; i++)
-            {
-                string tabName = hfsms[i].hfsmName;
-                if (hfsms[i] == Selection.activeGameObject.GetComponent<Behaviour>().TopHFSM)
-                    tabName = "Base";
-                if (parentHFSM.Count != 0 && hfsms[i] == parentHFSM.Peek())
-                    tabName = "Go Back";
-                hfsmTabs[i] = tabName;
-            }
-
-            int chosenTab = GUILayout.Toolbar(selectedTab, hfsmTabs, GUILayout.Width(100*hfsmTabs.Length));
-            if (chosenTab != selectedTab)
-            {
-                selectedTab = chosenTab;
-                ClearNodeSelection();
-                FillFromHFSM(hfsms[selectedTab]);
-            }
-
             //Draw connections
-            foreach(Connection c in connections)
+            foreach (Connection c in connections)
             {
                 //Find start position
                 int i = c.fromNode.ToConnections.IndexOf(c);
@@ -147,29 +151,29 @@ namespace RoseHFSM
                     c.toNode.NodeRect.height / c.toNode.FromConnections.Count / 2);
 
                 DrawCurve(startPos, endPos);
-                if(c == selectedConnection)
+                if (c == selectedConnection)
                     DrawDirectionMarker(endPos, Color.red);
                 else
                 {
                     DrawDirectionMarker(endPos, Color.black);
                 }
             }
-      
+
             Event e = Event.current;
 
             //Check for Drag and Drop states
             //if (e.type == EventType.MouseUp && e.button == 0)
             foreach (Object o in DragAndDrop.objectReferences)
             {
-                if(o is MonoScript && (((MonoScript)o).GetClass().IsSubclassOf(typeof(State)) ||
+                if (o is MonoScript && (((MonoScript)o).GetClass().IsSubclassOf(typeof(State)) ||
                     ((MonoScript)o).GetClass() == typeof(State)))
                 {
                     DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
 
-                    if(e.type == EventType.DragPerform)
+                    if (e.type == EventType.DragPerform)
                     {
                         State state = Selection.activeGameObject.AddComponent(((MonoScript)o).GetClass()) as State;
-                        state.hideFlags = HideFlags.HideInInspector;
+                        //state.hideFlags = HideFlags.HideInInspector;
                         state.nodeEditorLoc.x = e.mousePosition.x;
                         state.nodeEditorLoc.y = e.mousePosition.y;
                         AddNode(state);
@@ -179,7 +183,7 @@ namespace RoseHFSM
                             hfsms.Add(((ParentState)state).StateHFSM);
 
                         DragAndDrop.AcceptDrag();
-                            e.Use();
+                        e.Use();
                     }
 
                 }
@@ -219,171 +223,34 @@ namespace RoseHFSM
                     DrawNewTransitionCurve(fromNode.NodeRect, e.mousePosition);
             }
 
-            
+            DrawNodes();
+            DrawConnections();
+            DrawInspector();
+            DrawToolbar();
+
+            ProcessEvents(e);
+            ProcessNodeEvents(e);
+
             BeginWindows();
 
-            for (int i = 0; i < nodes.Count; i++)
+            
+
+            /*for (int i = 0; i < nodes.Count; i++)
             {
                 if (e.type == EventType.MouseUp && e.button == 0 && !nodes[i].NodeRect.Contains(e.mousePosition) &&
                     !inspect.Contains(e.mousePosition))
                     ClearNodeSelection();
 
+                /*
                 GUI.color = Color.gray;
                 if (currentMode == NodeEditorMode.Simulation && nodes[i].NodeState == currentHFSM.CurrentState)
                     GUI.color = Color.magenta;
                 else if (currentHFSM.StartState == nodes[i].NodeState)
                     GUI.color = Color.blue;
                 nodes[i].NodeRect = GUI.Window(i, nodes[i].NodeRect, DrawNodeWindow, nodes[i].NodeState.StateName);
+            }*/
 
-            }
-
-            if (selectedNode != null && selectedNode.NodeState != null)
-            {
-                GUI.Box(inspect, selectedNode.NodeState.StateName);
-
-                Rect inspectContent = new Rect(inspect);
-                inspectContent.y += 20;
-                inspectContent.height -= 20;
-                GUILayout.BeginArea(inspectContent);
-                inspectScroll = GUILayout.BeginScrollView(inspectScroll);
-
-                //Display State details
-                if (selectedConnection == null) {
-                    SerializedObject serializedObject = new SerializedObject(selectedNode.NodeState);
-
-                    SerializedProperty property = serializedObject.GetIterator();
-                    property.Next(true);
-                    bool children = false;
-
-
-                    while (property.NextVisible(children))
-                    {
-                        //serializedObject.Update();
-                        if (property.name == "nodeEditorLoc" ||
-                            property.name == "transitions")
-                            continue;
-
-                        EditorGUILayout.PropertyField(property);
-
-                    }
-
-                    serializedObject.ApplyModifiedProperties();
-
-                    EditorGUILayout.LabelField("Transitions");
-                    foreach (Connection t in selectedNode.FromConnections) {
-                        State fromState = t.fromNode.NodeState;
-                        if (outsiderNode != null && t.fromNode == outsiderNode)
-                            //fromState = currentHFSM.OutsideTransitions[t.transition];
-                        if (fromState == null)
-                            continue;
-                        GUILayout.BeginHorizontal();
-                        if (GUILayout.Button(fromState.StateName + " > " + t.toNode.NodeState.StateName))
-                        {
-                            selectedConnection = t;
-                        }
-                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
-                        {
-                            DestroyConnection(t);
-                            break;
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    foreach (Connection t in selectedNode.ToConnections) {
-                        State toState = t.transition.ToState;
-                        if (outsiderNode != null && t.toNode == outsiderNode)
-                            toState = t.transition.ToState;
-                        if (toState == null)
-                            continue;
-                        GUILayout.BeginHorizontal();
-                        if (GUILayout.Button(t.fromNode.NodeState.StateName + " > " + toState.StateName))
-                        {
-                            selectedConnection = t;
-                        }
-                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
-                        {
-                            DestroyConnection(t);
-                            break;
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                }
-                //Display transition details
-                else if (selectedCondition.Count >= 0) {
-                    DisplayCondition(e);
-                }
-
-                GUILayout.EndScrollView();
-                
-                GUILayout.EndArea();
-            }
-
-            switch (currentMode)
-            {
-                case (NodeEditorMode.Editing):
-                    if (e.type == EventType.ContextClick)
-                    {
-                        GenericMenu menu = new GenericMenu();
-                        menu.AddItem(new GUIContent("New State"), false, new GenericMenu.MenuFunction2(AddNodeCallBack),
-                            e.mousePosition);
-                        menu.AddItem(new GUIContent("New HFSM State"), false, new GenericMenu.MenuFunction2(AddHFSMCallBack),
-                            e.mousePosition);
-                        menu.ShowAsContext();
-                        e.Use();
-
-                    }
-                    break;
-                case (NodeEditorMode.NewTransition):
-                    if (e.type == EventType.MouseUp && e.button == 0)
-                    {
-                        for (int i = 0; i < nodes.Count; i++)
-                        {
-                            if (newTransitionFrom == nodes[i])
-                                continue;
-
-                            if (nodes[i].NodeRect.Contains(e.mousePosition))
-                            {
-                                if (nodes[i].NodeState is ParentState)
-                                {
-                                    GenericMenu parentMenu = new GenericMenu();
-                                    parentMenu.AddItem(new GUIContent("to Starting Node"), false,
-                                        new GenericMenu.MenuFunction2(ToStartParentTransitionCallback),
-                                        nodes[i]);
-                                    parentMenu.AddItem(new GUIContent("to Current Node"), false,
-                                        new GenericMenu.MenuFunction2(ToCurrentParentTransitionCallback),
-                                        nodes[i]);
-                                    parentMenu.AddItem(new GUIContent("Cancel"), false,
-                                        new GenericMenu.MenuFunction(CancelTransitioning));
-                                    parentMenu.ShowAsContext();
-                                    e.Use();
-                                }
-                                else
-                                {
-                                    AddTransition(newTransitionFrom, nodes[i]); 
-                                }
-                                CancelTransitioning();
-                                break;
-                            }
-                        }
-
-                        if (currentMode == NodeEditorMode.Editing)
-                            break;
-
-                        GenericMenu menu = new GenericMenu();
-                        menu.AddItem(new GUIContent("To New State"), false,
-                            new GenericMenu.MenuFunction2(NewStateViaTransitionCallBack),
-                            e.mousePosition);
-                        menu.AddItem(new GUIContent("Cancel"), false, new GenericMenu.MenuFunction(CancelTransitioning));
-                        menu.ShowAsContext();
-                        e.Use();
-
-                    }
-                    else if (e.type == EventType.MouseUp && e.button == 1)
-                    {
-                        CancelTransitioning();
-                        e.Use();
-                    }
-                    break;
-            }
+            
 
             //Draw Outsider node
             if (outsiderNode != null)
@@ -425,13 +292,230 @@ namespace RoseHFSM
             }
         }
 
+        private void DrawNodes()
+        {
+            if (nodes == null) return;
+
+            foreach (var node in nodes)
+            {
+                node.Draw();
+            }
+        }
+
+        private void DrawConnections()
+        {
+
+        }
+
+        private void DrawInspector()
+        {
+            //Setup Inspect rect
+            Rect inspect = new Rect(0, position.height - inspectHeight, position.width, inspectHeight);
+
+            if (selectedNode != null && selectedNode.NodeState != null)
+            {
+                GUI.Box(inspect, selectedNode.NodeState.StateName);
+
+                Rect inspectContent = new Rect(inspect);
+                inspectContent.y += 20;
+                inspectContent.height -= 20;
+                GUILayout.BeginArea(inspectContent);
+                inspectScroll = GUILayout.BeginScrollView(inspectScroll);
+
+                //Display State details
+                if (selectedConnection == null)
+                {
+                    SerializedObject serializedObject = new SerializedObject(selectedNode.NodeState);
+
+                    SerializedProperty property = serializedObject.GetIterator();
+                    property.Next(true);
+                    bool children = false;
+
+
+                    while (property.NextVisible(children))
+                    {
+                        //serializedObject.Update();
+                        if (property.name == "nodeEditorLoc" ||
+                            property.name == "transitions")
+                            continue;
+
+                        EditorGUILayout.PropertyField(property);
+
+                    }
+
+                    serializedObject.ApplyModifiedProperties();
+
+                    EditorGUILayout.LabelField("Transitions");
+                    foreach (Connection t in selectedNode.FromConnections)
+                    {
+                        State fromState = t.fromNode.NodeState;
+                        if (outsiderNode != null && t.fromNode == outsiderNode)
+                            //fromState = currentHFSM.OutsideTransitions[t.transition];
+                            if (fromState == null)
+                                continue;
+                        GUILayout.BeginHorizontal();
+                        if (GUILayout.Button(fromState.StateName + " > " + t.toNode.NodeState.StateName))
+                        {
+                            selectedConnection = t;
+                        }
+                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                        {
+                            DestroyConnection(t);
+                            break;
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                    foreach (Connection t in selectedNode.ToConnections)
+                    {
+                        State toState = t.transition.ToState;
+                        if (outsiderNode != null && t.toNode == outsiderNode)
+                            toState = t.transition.ToState;
+                        if (toState == null)
+                            continue;
+                        GUILayout.BeginHorizontal();
+                        if (GUILayout.Button(t.fromNode.NodeState.StateName + " > " + toState.StateName))
+                        {
+                            selectedConnection = t;
+                        }
+                        if (GUILayout.Button("DEL", GUILayout.Width(50)))
+                        {
+                            DestroyConnection(t);
+                            break;
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                }
+                //Display transition details
+                else if (selectedCondition.Count >= 0)
+                {
+                    DisplayCondition(Event.current);
+                }
+
+                GUILayout.EndScrollView();
+
+                GUILayout.EndArea();
+            }
+
+
+        }
+
+        private void DrawToolbar()
+        {
+            //Draw HFSM selector
+            string[] hfsmTabs = new string[hfsms.Count];
+            for (int i = 0; i < hfsms.Count; i++)
+            {
+                string tabName = hfsms[i].hfsmName;
+                if (hfsms[i] == Selection.activeGameObject.GetComponent<Behaviour>().TopHFSM)
+                    tabName = "Base";
+                if (parentHFSM.Count != 0 && hfsms[i] == parentHFSM.Peek())
+                    tabName = "Go Back";
+                hfsmTabs[i] = tabName;
+            }
+
+            int chosenTab = GUILayout.Toolbar(selectedTab, hfsmTabs, GUILayout.Width(100 * hfsmTabs.Length));
+            if (chosenTab != selectedTab)
+            {
+                selectedTab = chosenTab;
+                ClearNodeSelection();
+                FillFromHFSM(hfsms[selectedTab]);
+            }
+        }
+
+        private void ProcessEvents(Event e)
+        {
+            switch (currentMode)
+            {
+                case (NodeEditorMode.Editing):
+                    if (e.type == EventType.ContextClick)
+                    {
+                        GenericMenu menu = new GenericMenu();
+                        menu.AddItem(new GUIContent("New State"), false, new GenericMenu.MenuFunction2(AddNodeCallBack),
+                            e.mousePosition);
+                        menu.AddItem(new GUIContent("New HFSM State"), false, new GenericMenu.MenuFunction2(AddHFSMCallBack),
+                            e.mousePosition);
+                        menu.ShowAsContext();
+                        e.Use();
+
+                    }
+                    break;
+                case (NodeEditorMode.NewTransition):
+                    if (e.type == EventType.MouseUp && e.button == 0)
+                    {
+                        for (int i = 0; i < nodes.Count; i++)
+                        {
+                            if (newTransitionFrom == nodes[i])
+                                continue;
+
+                            if (nodes[i].NodeRect.Contains(e.mousePosition))
+                            {
+                                if (nodes[i].NodeState is ParentState)
+                                {
+                                    GenericMenu parentMenu = new GenericMenu();
+                                    parentMenu.AddItem(new GUIContent("to Starting Node"), false,
+                                        new GenericMenu.MenuFunction2(ToStartParentTransitionCallback),
+                                        nodes[i]);
+                                    parentMenu.AddItem(new GUIContent("to Current Node"), false,
+                                        new GenericMenu.MenuFunction2(ToCurrentParentTransitionCallback),
+                                        nodes[i]);
+                                    parentMenu.AddItem(new GUIContent("Cancel"), false,
+                                        new GenericMenu.MenuFunction(CancelTransitioning));
+                                    parentMenu.ShowAsContext();
+                                    e.Use();
+                                }
+                                else
+                                {
+                                    AddTransition(newTransitionFrom, nodes[i]);
+                                }
+                                CancelTransitioning();
+                                break;
+                            }
+                        }
+
+                        if (currentMode == NodeEditorMode.Editing)
+                            break;
+
+                        GenericMenu menu = new GenericMenu();
+                        menu.AddItem(new GUIContent("To New State"), false,
+                            new GenericMenu.MenuFunction2(NewStateViaTransitionCallBack),
+                            e.mousePosition);
+                        menu.AddItem(new GUIContent("Cancel"), false, new GenericMenu.MenuFunction(CancelTransitioning));
+                        menu.ShowAsContext();
+                        e.Use();
+
+                    }
+                    else if (e.type == EventType.MouseUp && e.button == 1)
+                    {
+                        CancelTransitioning();
+                        e.Use();
+                    }
+                    break;
+            }
+        }
+
+        private void ProcessNodeEvents(Event e)
+        {
+            if (nodes == null) return;
+            foreach (var node in nodes)
+            {
+                node.ProcessEvents(e);
+            }
+        }
+
+        private Node CreateNode(State state, Rect rect)
+        {
+            Node node = new Node(state, rect, nodeStyle, nodeStyleSelected, NodeSelect, NodeContextMenu);
+
+            return node;
+        }
+
         private void DisplayCondition(Event e)
         {
 
             //Back button
             if (GUILayout.Button("Back"))
             {
-                if(selectedCondition.Count == 0)
+                if (selectedCondition.Count == 0)
                 {
                     selectedConnection = null;
                 }
@@ -454,7 +538,7 @@ namespace RoseHFSM
                     {
                         Condition condition = Selection.activeGameObject.AddComponent(((MonoScript)o).GetClass()) as Condition;
                         condition.hideFlags = HideFlags.HideInInspector;
-                        condition.Owner = Selection.activeGameObject.GetComponent<Behaviour>().Owner;
+                        //condition.Owner = Selection.activeGameObject.GetComponent<Behaviour>().Owner;
                         if (selectedCondition.Count == 0)
                             selectedConnection.transition.Conditions.Add(condition);
                         else if (selectedCondition.Peek() is OrCondition)
@@ -495,7 +579,7 @@ namespace RoseHFSM
                         selectedConnection.transition.Conditions.Remove(c);
                         break;
                     }
-                        
+
                     GUILayout.BeginHorizontal();
                     if (GUILayout.Button(c.GetType().Name))
                     {
@@ -511,8 +595,8 @@ namespace RoseHFSM
                 }
 
                 return;
-            }      
-            
+            }
+
 
             SerializedObject serializedObject = new SerializedObject(selectedCondition.Peek());
 
@@ -618,13 +702,13 @@ namespace RoseHFSM
             }
 
             serializedObject.ApplyModifiedProperties();
-          
+
         }
 
         private Node GetOutsiderNode()
         {
             if (outsiderNode == null)
-                outsiderNode = new RoseHFSM.Node(null, new Rect(position.width/2, position.height/2, 100, 100));
+                outsiderNode = CreateNode(null, new Rect(position.width / 2, position.height / 2, 100, 100));
             return outsiderNode;
         }
 
@@ -670,7 +754,7 @@ namespace RoseHFSM
 
                 Rect rect = new Rect(stateLocation.x, stateLocation.y, 100, 100);
 
-                Node node = new Node(hfsm.States[i], rect);
+                Node node = CreateNode(hfsm.States[i], rect);
 
                 if (hfsm.States[i] is ParentState)
                     hfsms.Add(((ParentState)hfsm.States[i]).StateHFSM);
@@ -681,7 +765,7 @@ namespace RoseHFSM
             //Make connections between each node;
             for (int i = 0; i < nodes.Count; i++)
             {
-                for (int j = nodes[i].NodeState.Transitions.Count-1; j >= 0 ; j--)
+                for (int j = nodes[i].NodeState.Transitions.Count - 1; j >= 0; j--)
                 {
                     //Iterating backwards to remove transitions leftover from
                     //inter hierarchical transitions
@@ -695,8 +779,8 @@ namespace RoseHFSM
                         nodes[i].NodeState.Transitions.RemoveAt(j);
                         continue;
                     }
-                     
-                    Node toNode = nodes.Find(obj =>obj.NodeState == nodes[i].NodeState.Transitions[j].ToState);
+
+                    Node toNode = nodes.Find(obj => obj.NodeState == nodes[i].NodeState.Transitions[j].ToState);
                     if (toNode == null)
                     {
                         toNode = GetOutsiderNode();
@@ -704,7 +788,7 @@ namespace RoseHFSM
                     }
 
                     AddConnection(nodes[i], toNode, nodes[i].NodeState.Transitions[j]);
-                    
+
                 }
             }
 
@@ -728,8 +812,8 @@ namespace RoseHFSM
                 AddConnection(GetOutsiderNode(), toNode, p.Key);
             }
             */
-        }    
-        
+        }
+
         private Connection AddConnection(Node fromNode, Node toNode, Transition transition)
         {
             Connection connection = new Connection(fromNode, toNode, transition);
@@ -737,14 +821,14 @@ namespace RoseHFSM
             toNode.FromConnections.Add(connection);
             connections.Add(connection);
             return connection;
-        }    
+        }
 
         /// <summary>
         /// Complete new transition.
         /// </summary>
         /// <param name="fromId">Start of the transition.</param>
         /// <param name="toId">End of the transition.</param>
-        void AddTransition(Node from, Node to)                                                                        
+        void AddTransition(Node from, Node to)
         {
             Transition transition = Selection.activeGameObject.AddComponent<Transition>();
             AddTransition(transition, from, to);
@@ -757,7 +841,7 @@ namespace RoseHFSM
 
             from.NodeState.Transitions.Add(transition);
             currentHFSM.Transitions.Add(transition);
-            if(!nodes.Contains(from))
+            if (!nodes.Contains(from))
             {
                 //currentHFSM.OutsideTransitions.Add(transition, from.NodeState);
                 //from = GetOutsiderNode();
@@ -778,14 +862,13 @@ namespace RoseHFSM
         void AddNode(State state)
         {
             state.StateName = "New " + state.GetType().Name;
-            state.Owner = Selection.activeGameObject.GetComponent<Behaviour>().Owner;
             if (nodes.Count == 0)
                 currentHFSM.StartState = state;
 
             currentHFSM.States.Add(state);
             Rect rect = new Rect(state.nodeEditorLoc.x, state.nodeEditorLoc.y, 100, 100);
 
-            nodes.Add(new Node(state, rect));
+            nodes.Add(CreateNode(state, rect));
         }
 
         /// <summary>
@@ -815,8 +898,8 @@ namespace RoseHFSM
                 DestroyConnection(forDeletion.FromConnections[i]);
             }
 
-            for (int i = forDeletion.ToConnections.Count-1;i >= 0; i--)
-            { 
+            for (int i = forDeletion.ToConnections.Count - 1; i >= 0; i--)
+            {
                 DestroyConnection(forDeletion.ToConnections[i]);
             }
 
@@ -858,7 +941,7 @@ namespace RoseHFSM
 
             Vector2 position = (Vector2)pos;
             State state = Selection.activeGameObject.AddComponent<State>();
-            state.hideFlags = HideFlags.HideInInspector;
+            //state.hideFlags = HideFlags.HideInInspector;
             state.nodeEditorLoc = position;
 
             AddNode(state);
@@ -944,16 +1027,15 @@ namespace RoseHFSM
             currentMode = NodeEditorMode.NewTransition;
         }
 
-        void DeleteNodeCallBack(object id)
+        void DeleteNodeCallBack(object node)
         {
-            Node forDeletion = nodes[(int)id];
-            DeleteNode(forDeletion);
+            DeleteNode((Node)node);
         }
         #endregion
 
         void DestroyHFSM(HFSM hfsm)
         {
-            foreach(State s in hfsm.States)
+            foreach (State s in hfsm.States)
             {
                 if (s is ParentState)
                     DestroyHFSM(((ParentState)s).StateHFSM);
@@ -967,48 +1049,26 @@ namespace RoseHFSM
             DestroyImmediate(hfsm);
         }
 
-        #region[DrawingMethods]
-        /// <summary>
-        /// Window functions.
-        /// </summary>
-        /// <param name="id">Id of window.</param>
-        void DrawNodeWindow(int id)
+        #region ContextMenus
+
+        private void NodeContextMenu(Node node)
         {
-            if (currentMode != NodeEditorMode.Editing)
-                return;
-
-            //Right-click menu
-            Event e = Event.current;
-            
-            if (e.type == EventType.mouseUp)
-            {
-                ClearNodeSelection();
-                selectedNode = nodes[id];
-            }
-            
-            if (e.type == EventType.mouseUp && e.button == 1)
-            {
-                GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("New Transition"), false, new GenericMenu.MenuFunction2(NewTransitionCallBack),
-                    nodes[id]);
-                menu.AddItem(new GUIContent("Set As Start State"), false, new GenericMenu.MenuFunction2(StartStateCallBack),
-                    nodes[id]);
-                menu.AddItem(new GUIContent("Delete"), false, new GenericMenu.MenuFunction2(DeleteNodeCallBack),
-                    id);
-                menu.ShowAsContext();
-                e.Use();
-
-            }
-
-            //Update position
-            if (e.type == EventType.mouseUp && e.button == 0)
-            {
-                nodes[id].NodeState.nodeEditorLoc.x = nodes[id].NodeRect.x;
-                nodes[id].NodeState.nodeEditorLoc.y = nodes[id].NodeRect.y;
-            }
-
-            GUI.DragWindow();
+            GenericMenu menu = new GenericMenu();
+            menu.AddItem(new GUIContent("New Transition"), false, new GenericMenu.MenuFunction2(NewTransitionCallBack), node);
+            menu.AddItem(new GUIContent("Set As Start State"), false, new GenericMenu.MenuFunction2(StartStateCallBack), node);
+            menu.AddItem(new GUIContent("Delete"), false, new GenericMenu.MenuFunction2(DeleteNodeCallBack), node);
+            menu.ShowAsContext();
         }
+
+        private void NodeSelect(Node node)
+        {
+            ClearNodeSelection();
+            selectedNode = node;
+        }
+
+        #endregion
+
+        #region[DrawingMethods]
 
         //Draws the window for outside node
         void DrawOutsiderWindow(int id)
@@ -1085,7 +1145,7 @@ namespace RoseHFSM
             Handles.BeginGUI();
             Handles.color = new Color(gridColor.r, gridColor.g, gridColor.b, gridOpacity);
 
-            offset += drag * 0.5f;
+            offset = (drag * 0.5f);
             Vector3 newOffset = new Vector3(offset.x % gridSpacing, offset.y % gridSpacing, 0);
 
             for (int i = 0; i < widthDivs; i++)
@@ -1107,6 +1167,19 @@ namespace RoseHFSM
 
         private void DestroyCondition(Condition condition)
         {
+            if (condition is OrCondition) {
+                DestroyCondition(((OrCondition)condition).a);
+                DestroyCondition(((OrCondition)condition).b);
+            }
+            else if (condition is AndCondition)
+            {
+                DestroyCondition(((AndCondition)condition).a);
+                DestroyCondition(((AndCondition)condition).b);
+            }
+            else if (condition is NotCondition)
+            {
+                DestroyCondition(((NotCondition)condition).notThis);
+            }
             DestroyImmediate(condition);
         }
 

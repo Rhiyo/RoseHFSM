@@ -7,13 +7,12 @@ namespace RoseHFSM
     public class Condition : MonoBehaviour
     {
         [SerializeField]
-        private GameObject owner;
-        public GameObject Owner
+        protected GameObject owner;
+
+        protected void Start()
         {
-            get { return owner; }
-            set { owner = value; }
+            owner = GetComponent<Behaviour>().Owner;
         }
-        
               
         public virtual bool Check() {
             return true;

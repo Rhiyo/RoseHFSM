@@ -11,11 +11,5 @@ namespace RoseHFSM
         public override bool Check() {
             return !notThis.Check();
         }
-
-        void OnDestroy()
-        {
-            if (notThis)
-                Destroy(notThis);
-        } 
     }
 }
