@@ -52,6 +52,10 @@ namespace RoseHFSM
 
         private GUIStyle nodeStyle;
         private GUIStyle nodeStyleSelected;
+        private GUIStyle nodeStyleStart;
+        private GUIStyle nodeStyleStartSelected;
+        
+        
         private GUIStyle nodeStyleSimulation;
         private GUIStyle connectionStyle;
         private Dictionary<string, Color> theme;
@@ -75,10 +79,28 @@ namespace RoseHFSM
             nodeStyle.padding.top = 4;
 
             nodeStyleSelected = new GUIStyle();
-            nodeStyleSelected.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Selected.png") as Texture2D;
+            nodeStyleSelected.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Default_Selected.png") as Texture2D;
             nodeStyleSelected.border = new RectOffset(2, 2, 24, 2);
             nodeStyleSelected.alignment = TextAnchor.UpperCenter;
-            nodeStyle.padding.top = 4;
+            nodeStyleSelected.padding.top = 4;
+
+            nodeStyleStart = new GUIStyle();
+            nodeStyleStart.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Start.png") as Texture2D;
+            nodeStyleStart.border = new RectOffset(2, 2, 24, 2);
+            nodeStyleStart.alignment = TextAnchor.UpperCenter;
+            nodeStyleStart.padding.top = 4;
+
+            nodeStyleStartSelected = new GUIStyle();
+            nodeStyleStartSelected.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Start_Selected.png") as Texture2D;
+            nodeStyleStartSelected.border = new RectOffset(2, 2, 24, 2);
+            nodeStyleStartSelected.alignment = TextAnchor.UpperCenter;
+            nodeStyleStartSelected.padding.top = 4;
+
+            nodeStyleSimulation = new GUIStyle();
+            nodeStyleSimulation.normal.background = EditorGUIUtility.Load("Assets/Plugins/RoseHFSM/Editor/gui/Node_Simulation.png") as Texture2D;
+            nodeStyleSimulation.border = new RectOffset(2, 2, 24, 2);
+            nodeStyleSimulation.alignment = TextAnchor.UpperCenter;
+            nodeStyleSimulation.padding.top = 4;
 
             connectionStyle = new GUIStyle();
         }
@@ -298,6 +320,8 @@ namespace RoseHFSM
 
             foreach (var node in nodes)
             {
+                node.IsSimulation = EditorApplication.isPlaying;
+                node.IsStart = currentHFSM.StartState == node.NodeState;
                 node.Draw();
             }
         }
@@ -504,8 +528,8 @@ namespace RoseHFSM
 
         private Node CreateNode(State state, Rect rect)
         {
-            Node node = new Node(state, rect, nodeStyle, nodeStyleSelected, NodeSelect, NodeContextMenu);
-
+            Node node = new Node(state, rect, NodeSelect, NodeContextMenu);
+            node.SetStyles(nodeStyle, nodeStyleSelected, nodeStyleStart, nodeStyleStartSelected, nodeStyleSimulation);
             return node;
         }
 

@@ -29,9 +29,14 @@ namespace RoseHFSM
 
         private GUIStyle styleDefault;
         private GUIStyle styleSelected;
+        private GUIStyle styleStart;
+        private GUIStyle styleStartSelected;
+        private GUIStyle styleSimulation;
 
         public bool IsDragged;
         public bool IsSelected;
+        public bool IsStart;
+        public bool IsSimulation;
 
         private UnityAction<Node> contextAction;
         private UnityAction<Node> selectAction;
@@ -54,14 +59,25 @@ namespace RoseHFSM
             get { return toConnections; }
         }
 
-        public Node(State state, Rect rect, GUIStyle styleDefault, GUIStyle styleSelected, UnityAction<Node> selectAction, UnityAction<Node> contextAction)
+        public Node(State state, Rect rect, UnityAction<Node> selectAction, UnityAction<Node> contextAction)
         {
             this.state = state;
             this.rect = rect;
-            this.styleDefault = styleDefault;
-            this.styleSelected = styleSelected;
             this.selectAction = selectAction;
             this.contextAction = contextAction;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void SetStyles(GUIStyle styleDefault, GUIStyle styleSelected, GUIStyle styleStart, GUIStyle styleStartSelected, GUIStyle styleSimulation)
+        {
+
+            this.styleDefault = styleDefault;
+            this.styleSelected = styleSelected;
+            this.styleStart = styleStart;
+            this.styleStartSelected = styleStartSelected;
+            this.styleSimulation = styleSimulation;
         }
 
         public void AddToConnection(Connection connection)
@@ -88,15 +104,27 @@ namespace RoseHFSM
             string name = "Node";
             if (state != null)
                 name = state.StateName;
-            if(IsSelected)
+            if(IsSimulation)
+            {
+                GUI.Box(rect, name, styleSimulation);
+            }
+            else if(IsSelected && IsStart)
+            {
+                GUI.Box(rect, name, styleStartSelected);
+            }
+            else if (IsSelected && !IsStart)
             {
                 GUI.Box(rect, name, styleSelected);
+            }
+            else if (!IsSelected && IsStart)
+            {
+                GUI.Box(rect, name, styleStart);
             }
             else
             {
                 GUI.Box(rect, name, styleDefault);
             }
-            
+
         }
 
         public bool ProcessEvents(Event e)
