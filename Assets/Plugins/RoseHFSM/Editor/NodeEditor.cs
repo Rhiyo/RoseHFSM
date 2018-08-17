@@ -448,6 +448,33 @@ namespace RoseHFSM
 
         private void ProcessEvents(Event e)
         {
+            //Check for Drag and Drop states
+            foreach (Object o in DragAndDrop.objectReferences)
+            {
+                if (o.GetType().Equals(typeof(State)) || o.GetType().IsSubclassOf(typeof(State)))
+                {
+                    Debug.Log("Is state");
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                    if (e.type == EventType.DragPerform)
+                    {
+                        State state = Selection.activeGameObject.AddComponent(o.GetType()) as State;
+                        state.hideFlags = HideFlags.HideInInspector;
+                        state.nodeEditorLoc.x = e.mousePosition.x;
+                        state.nodeEditorLoc.y = e.mousePosition.y;
+                        AddNode(state);
+
+                        //Hack to add HFSM
+                        if (state is ParentState)
+                            hfsms.Add(((ParentState)state).StateHFSM);
+
+                        DragAndDrop.AcceptDrag();
+                        e.Use();
+                    }
+
+                }
+            }
+
             switch (currentMode)
             {
                 case (NodeEditorMode.Editing):
