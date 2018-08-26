@@ -5,8 +5,8 @@ using UnityEngine;
 namespace RoseHFSM
 {
     public class Condition : MonoBehaviour
-    {
-        public GameObject Owner { get; set; }
+    {        
+        public Behaviour Behaviour { get; set; }
 
               
         public virtual bool Check() {

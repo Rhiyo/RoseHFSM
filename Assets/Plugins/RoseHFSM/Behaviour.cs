@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 namespace RoseHFSM
@@ -16,11 +17,15 @@ namespace RoseHFSM
 
         [SerializeField]
         private GameObject owner;
+        public GameObject Owner { get { return owner; } }
 
+        [Obsolete("intFlags are now depreciated, please use LookUp instead.")]
         public Dictionary<string, int> intFlags = new Dictionary<string, int>();
 
+        [Obsolete("vec3Flags are now depreciated, please use LookUp instead.")]
         public Dictionary<string, Vector3> vec3Flags = new Dictionary<string, Vector3>();
 
+        [Obsolete("flags are now depreciated, please use LookUp instead.")]
         public HashSet<string> flags = new HashSet<string>();
 
         public Dictionary<object, object> lookUp = new Dictionary<object, object>();
@@ -64,12 +69,12 @@ namespace RoseHFSM
         {
             foreach (var state in GetComponents<State>())
             {
-                state.Owner = owner;
+                state.Behaviour = this;
             }
 
             foreach (var condition in GetComponents<Condition>())
             {
-                condition.Owner = owner;
+                condition.Behaviour = this;
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -22,7 +23,22 @@ namespace RoseHFSM
         /// <summary>
         /// The game object that is the owner of this behaviour.
         /// </summary>
-        public GameObject Owner { get; set; }
+        public Behaviour Behaviour { get; set; }
+
+        protected GameObject Owner
+        {
+            get {
+                if (Behaviour == null) return null;
+                return Behaviour.Owner;
+            }
+        }
+
+        #region depreciated
+
+        [Obsolete("owner is now decpreciated. Use Owner directly")]
+        protected GameObject owner;
+
+        #endregion
 
         [SerializeField]
         private List<Transition> transitions = new List<Transition>();
