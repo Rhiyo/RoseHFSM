@@ -16,17 +16,19 @@ namespace RoseHFSM
 
         [SerializeField]
         private GameObject owner;
-        public GameObject Owner
-        {
-            get { return owner; }
-            set { owner = value; }
-        }
 
         public Dictionary<string, int> intFlags = new Dictionary<string, int>();
 
         public Dictionary<string, Vector3> vec3Flags = new Dictionary<string, Vector3>();
 
         public HashSet<string> flags = new HashSet<string>();
+
+        public Dictionary<object, object> lookUp = new Dictionary<object, object>();
+
+        public T Lookup<T>(object o)
+        {
+            return (T)lookUp[o];
+        }
 
         private float timer;
         public float Timer
@@ -40,12 +42,7 @@ namespace RoseHFSM
             get { return randomSelection; }
         }
 
-        private bool paused;
-        public bool Paused
-        {
-            set { paused = value; }
-            get { return paused; }
-        }
+        public bool Paused { get; set; }
 
         private float timerMin = -1;
 
@@ -57,6 +54,22 @@ namespace RoseHFSM
             {
                 Debug.LogError("No starting HFSM.");
                 return;
+            }
+
+            SetupHfsm();
+        }
+
+        //Recursively set owners
+        private void SetupHfsm()
+        {
+            foreach (var state in GetComponents<State>())
+            {
+                state.Owner = owner;
+            }
+
+            foreach (var condition in GetComponents<Condition>())
+            {
+                condition.Owner = owner;
             }
         }
 

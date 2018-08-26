@@ -19,29 +19,16 @@ namespace RoseHFSM
             set { stateName = value; }
         }
 
-        protected GameObject owner;
-        
-        [SerializeField]
-        protected UnityEvent continuousAction;
-
-        [SerializeField]
-        protected UnityEvent entryAction;
-
-        [SerializeField]
-        protected UnityEvent exitAction;
+        /// <summary>
+        /// The game object that is the owner of this behaviour.
+        /// </summary>
+        public GameObject Owner { get; set; }
 
         [SerializeField]
         private List<Transition> transitions = new List<Transition>();
         public List<Transition> Transitions
         {
             get { return transitions; }
-        }
-
-        protected bool isActive;
-
-        protected void Start()
-        {
-            owner = GetComponent<Behaviour>().Owner;
         }
 
         public State Execute()
@@ -67,8 +54,6 @@ namespace RoseHFSM
         /// </summary>
         protected virtual State ContinuousAction()
         {
-            continuousAction.Invoke();
-
             return this;
         }
 
@@ -77,8 +62,7 @@ namespace RoseHFSM
         /// </summary>
         public virtual void EntryAction()
         {
-            isActive = true;
-            entryAction.Invoke();
+
         }
 
         /// <summary>
@@ -86,8 +70,7 @@ namespace RoseHFSM
         /// </summary>
         protected virtual void ExitAction()
         {
-            isActive = false;
-            exitAction.Invoke();
+
         }
     }
 }
